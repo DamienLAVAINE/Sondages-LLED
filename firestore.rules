@@ -1,0 +1,77 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function validStatus(status) {
+      return status in [
+        'À découvrir',
+        'À travailler',
+        'Au répertoire',
+        'Refusé'
+      ];
+    }
+
+    match /songs/{songId} {
+      // Tous les membres authentifiés anonymement peuvent lire les titres.
+      allow read: if signedIn();
+
+      // Chacun peut ajouter ses propres propositions.
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly([
+          'title', 'artist', 'link', 'proposedBy',
+          'proposerUid', 'status', 'createdAt'
+        ])
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 120
+        && request.resource.data.artist is string
+        && request.resource.data.artist.size() > 0
+        && request.resource.data.artist.size() <= 120
+        && request.resource.data.link is string
+        && request.resource.data.link.size() <= 500
+        && request.resource.data.proposedBy is string
+        && request.resource.data.proposedBy.size() <= 30
+        && request.resource.data.proposerUid == request.auth.uid
+        && request.resource.data.status == 'À découvrir'
+        && request.resource.data.createdAt == request.time;
+
+      // Seul le proposant peut modifier le statut de son morceau.
+      allow update: if signedIn()
+        && resource.data.proposerUid == request.auth.uid
+        && request.resource.data.diff(resource.data)
+             .affectedKeys().hasOnly(['status'])
+        && validStatus(request.resource.data.status);
+
+      // Seul le proposant peut supprimer son morceau.
+      allow delete: if signedIn()
+        && resource.data.proposerUid == request.auth.uid;
+
+      match /votes/{voterUid} {
+        allow read: if signedIn();
+
+        // Un document de vote par identifiant Firebase et par morceau.
+        allow create: if signedIn()
+          && voterUid == request.auth.uid
+          && request.resource.data.keys().hasOnly([
+            'uid', 'nickname', 'createdAt'
+          ])
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.nickname is string
+          && request.resource.data.nickname.size() <= 30
+          && request.resource.data.createdAt == request.time;
+
+        // Un membre peut retirer uniquement son propre vote.
+        allow delete: if signedIn()
+          && voterUid == request.auth.uid;
+
+        allow update: if false;
+      }
+    }
+  }
+}
