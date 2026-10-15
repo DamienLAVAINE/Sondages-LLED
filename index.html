@@ -1,0 +1,757 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LLED — Propositions de morceaux</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101114;
+      --panel: #1b1d23;
+      --panel2: #242731;
+      --text: #f4f4f5;
+      --muted: #a1a1aa;
+      --accent: #f0b429;
+      --border: #343741;
+      --green: #6ee7a0;
+      --red: #ff8585;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    header {
+      padding: 32px 18px 24px;
+      text-align: center;
+      background: linear-gradient(135deg, #242631, #15161a);
+      border-bottom: 1px solid var(--border);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: clamp(2rem, 7vw, 3.2rem);
+      letter-spacing: .12em;
+    }
+
+    header p {
+      margin: 8px 0 0;
+      color: var(--muted);
+    }
+
+    main {
+      width: min(100% - 28px, 950px);
+      margin: 24px auto 50px;
+    }
+
+    .panel, .song {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 1.15rem;
+    }
+
+    label {
+      display: block;
+      color: var(--muted);
+      font-size: .9rem;
+      margin-bottom: 5px;
+    }
+
+    input, select, button {
+      font: inherit;
+    }
+
+    input, select {
+      width: 100%;
+      min-width: 0;
+      color: var(--text);
+      background: #111217;
+      border: 1px solid #444752;
+      border-radius: 9px;
+      padding: 11px 12px;
+    }
+
+    input:focus, select:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .field { min-width: 0; }
+    .full { grid-column: 1 / -1; }
+
+    button {
+      cursor: pointer;
+      border: 0;
+      border-radius: 9px;
+      padding: 10px 14px;
+      font-weight: 650;
+      transition: filter .15s, transform .15s;
+    }
+
+    button:hover { filter: brightness(1.12); }
+    button:active { transform: scale(.98); }
+    button:disabled { cursor: wait; opacity: .55; }
+
+    .primary {
+      background: var(--accent);
+      color: #191919;
+    }
+
+    .secondary {
+      color: var(--text);
+      background: var(--panel2);
+      border: 1px solid var(--border);
+    }
+
+    .danger {
+      color: var(--red);
+      background: transparent;
+      border: 1px solid #754343;
+    }
+
+    .hint, .muted {
+      color: var(--muted);
+      font-size: .88rem;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 20px 0;
+    }
+
+    .song-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .song h3 {
+      margin: 0;
+      font-size: 1.15rem;
+      overflow-wrap: anywhere;
+    }
+
+    .artist {
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .song-link {
+      display: inline-block;
+      color: var(--accent);
+      margin-top: 7px;
+      overflow-wrap: anywhere;
+    }
+
+    .status {
+      width: auto;
+      max-width: 170px;
+      padding: 7px 8px;
+      font-size: .85rem;
+    }
+
+    .rating-area {
+      margin-top: 15px;
+      padding-top: 13px;
+      border-top: 1px solid var(--border);
+    }
+
+    .rating-summary {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .average {
+      font-size: 1.05rem;
+      font-weight: 750;
+    }
+
+    .stars {
+      display: inline-flex;
+      gap: 2px;
+      align-items: center;
+    }
+
+    .star {
+      padding: 1px 3px;
+      color: #656875;
+      background: transparent;
+      font-size: 1.65rem;
+      line-height: 1.25;
+      border-radius: 5px;
+    }
+
+    .star.selected, .star.my-rating {
+      color: var(--accent);
+    }
+
+    .star:focus-visible {
+      outline: 2px solid var(--accent);
+    }
+
+    .my-note {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: .86rem;
+    }
+
+    .song-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .song-actions button {
+      font-size: .86rem;
+      padding: 7px 10px;
+    }
+
+    .empty, #message {
+      color: var(--muted);
+      text-align: center;
+      padding: 18px 8px;
+    }
+
+    #message.error { color: var(--red); }
+    #message.success { color: var(--green); }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      color: var(--muted);
+      font-size: .78rem;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 580px) {
+      .form-grid, .toolbar { grid-template-columns: 1fr; }
+      .song-top { flex-direction: column; }
+      .status { max-width: 100%; width: 100%; }
+      .panel, .song { padding: 14px; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>LLED</h1>
+    <p>Proposez, écoutez, notez… et construisons le répertoire ensemble.</p>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>👤 Mon identité</h2>
+      <div class="field">
+        <label for="nickname">Le prénom ou pseudo que verront les autres</label>
+        <input id="nickname" maxlength="40" placeholder="Ex. : Alex">
+      </div>
+      <p class="hint">Ton identité technique est conservée par Firebase dans ce navigateur. Pas de compte classique à créer.</p>
+    </section>
+
+    <section class="panel">
+      <h2>➕ Proposer un morceau</h2>
+      <form id="songForm" class="form-grid">
+        <div class="field">
+          <label for="title">Titre *</label>
+          <input id="title" maxlength="150" required placeholder="Ex. : La grenade">
+        </div>
+        <div class="field">
+          <label for="artist">Artiste *</label>
+          <input id="artist" maxlength="150" required placeholder="Ex. : Clara Luciani">
+        </div>
+        <div class="field full">
+          <label for="link">Lien d'écoute (YouTube, Spotify… facultatif)</label>
+          <input id="link" type="url" maxlength="1000" placeholder="https://…">
+        </div>
+        <div class="full">
+          <button class="primary" type="submit">Ajouter le morceau</button>
+        </div>
+      </form>
+    </section>
+
+    <div id="message" role="status" aria-live="polite">Connexion à la liste…</div>
+
+    <div class="toolbar">
+      <div class="field">
+        <label for="filterStatus">Filtrer par statut</label>
+        <select id="filterStatus">
+          <option value="Tous">Tous les morceaux</option>
+          <option value="À découvrir">À découvrir</option>
+          <option value="À travailler">À travailler</option>
+          <option value="Au répertoire">Au répertoire</option>
+          <option value="Refusé">Refusé</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="sortBy">Trier les morceaux</label>
+        <select id="sortBy">
+          <option value="rating">Meilleures notes</option>
+          <option value="count">Nombre de notes</option>
+          <option value="recent">Plus récents</option>
+          <option value="title">Titre A–Z</option>
+        </select>
+      </div>
+    </div>
+
+    <section>
+      <h2>🎵 Les propositions</h2>
+      <div id="songList">
+        <p class="empty">Chargement des morceaux…</p>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import {
+      getAuth, signInAnonymously, onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import {
+      getFirestore, collection, addDoc, doc, setDoc, deleteDoc,
+      updateDoc, onSnapshot, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+    // REMPLACE ces valeurs par la configuration de ton application Firebase.
+    const firebaseConfig = {
+      apiKey: "REMPLACER_API_KEY",
+      authDomain: "REMPLACER_AUTH_DOMAIN",
+      projectId: "REMPLACER_PROJECT_ID",
+      storageBucket: "REMPLACER_STORAGE_BUCKET",
+      messagingSenderId: "REMPLACER_MESSAGING_SENDER_ID",
+      appId: "REMPLACER_APP_ID"
+    };
+
+    const STATUSES = [
+      "À découvrir", "À travailler", "Au répertoire", "Refusé"
+    ];
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const $ = id => document.getElementById(id);
+    let currentUser = null;
+    let songs = [];
+    const ratingsBySong = new Map();
+    const ratingUnsubscribers = new Map();
+    const ratingUnsubscribe = new Map();
+
+    const nicknameInput = $("nickname");
+    nicknameInput.value = localStorage.getItem("lledNickname") || "";
+
+    nicknameInput.addEventListener("change", () => {
+      const name = nicknameInput.value.trim().slice(0, 40);
+      nicknameInput.value = name;
+      localStorage.setItem("lledNickname", name);
+      renderSongs();
+    });
+
+    function nickname() {
+      return nicknameInput.value.trim().slice(0, 40) || "Membre";
+    }
+
+    function showMessage(message, type = "") {
+      const el = $("message");
+      el.textContent = message;
+      el.className = type;
+    }
+
+    function safeUrl(value) {
+      try {
+        const url = new URL(value);
+        return ["http:", "https:"].includes(url.protocol) ? url.href : "";
+      } catch {
+        return "";
+      }
+    }
+
+    function ratingInfo(songId) {
+      const ratings = [...(ratingsBySong.get(songId)?.values() || [])];
+      const average = ratings.length
+        ? ratings.reduce((sum, item) => sum + item.rating, 0) / ratings.length
+        : null;
+      const mine = currentUser
+        ? ratings.find(item => item.uid === currentUser.uid)?.rating ?? null
+        : null;
+      return { ratings, average, count: ratings.length, mine };
+    }
+
+    function starButtons(songId, mine) {
+      const wrap = document.createElement("div");
+      wrap.className = "stars";
+      wrap.setAttribute("role", "group");
+      wrap.setAttribute("aria-label", "Noter ce morceau de 1 à 5 étoiles");
+
+      for (let n = 1; n <= 5; n++) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "star" + (mine !== null && n <= mine ? " my-rating" : "");
+        btn.textContent = n <= (mine || 0) ? "★" : "☆";
+        btn.setAttribute("aria-label", `${n} sur 5`);
+        btn.title = `Attribuer ${n}/5`;
+        btn.addEventListener("click", () => saveRating(songId, n));
+        wrap.appendChild(btn);
+      }
+      return wrap;
+    }
+
+    function renderSongs() {
+      const root = $("songList");
+      root.replaceChildren();
+
+      const filter = $("filterStatus").value;
+      const sort = $("sortBy").value;
+
+      let visible = songs.filter(song =>
+        filter === "Tous" || song.status === filter
+      );
+
+      const infoFor = song => ratingInfo(song.id);
+
+      visible.sort((a, b) => {
+        if (sort === "rating") {
+          const ar = infoFor(a), br = infoFor(b);
+          if (ar.average === null && br.average !== null) return 1;
+          if (br.average === null && ar.average !== null) return -1;
+          return (br.average ?? 0) - (ar.average ?? 0)
+            || br.count - ar.count
+            || a.title.localeCompare(b.title, "fr");
+        }
+        if (sort === "count") {
+          const difference = infoFor(b).count - infoFor(a).count;
+          return difference || a.title.localeCompare(b.title, "fr");
+        }
+        if (sort === "title") {
+          return a.title.localeCompare(b.title, "fr");
+        }
+        return (b.createdAt?.toMillis?.() ?? 0)
+          - (a.createdAt?.toMillis?.() ?? 0);
+      });
+
+      if (!visible.length) {
+        const empty = document.createElement("p");
+        empty.className = "empty";
+        empty.textContent = songs.length
+          ? "Aucun morceau pour ce filtre."
+          : "Aucun morceau pour le moment. Soyez les premiers à proposer une chanson !";
+        root.appendChild(empty);
+        return;
+      }
+
+      for (const song of visible) {
+        const info = infoFor(song);
+        const card = document.createElement("article");
+        card.className = "song";
+
+        const top = document.createElement("div");
+        top.className = "song-top";
+
+        const titleBlock = document.createElement("div");
+        const title = document.createElement("h3");
+        title.textContent = song.title;
+        const artist = document.createElement("div");
+        artist.className = "artist";
+        artist.textContent = song.artist;
+        const proposer = document.createElement("div");
+        proposer.className = "hint";
+        proposer.textContent = `Proposé par ${song.proposedBy || "un membre"}`;
+
+        titleBlock.append(title, artist, proposer);
+
+        const status = document.createElement("span");
+        status.className = "badge";
+        status.textContent = song.status || "À découvrir";
+        top.append(titleBlock, status);
+        card.appendChild(top);
+
+        const url = safeUrl(song.link || "");
+        if (url) {
+          const link = document.createElement("a");
+          link.className = "song-link";
+          link.href = url;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.textContent = "▶ Écouter le morceau";
+          card.appendChild(link);
+        }
+
+        const ratingArea = document.createElement("div");
+        ratingArea.className = "rating-area";
+
+        const summary = document.createElement("div");
+        summary.className = "rating-summary";
+
+        const average = document.createElement("span");
+        average.className = "average";
+        average.textContent = info.average === null
+          ? "Pas encore noté"
+          : `${info.average.toLocaleString("fr-FR", {
+              minimumFractionDigits: 1, maximumFractionDigits: 1
+            })}/5`;
+
+        const count = document.createElement("span");
+        count.className = "muted";
+        count.textContent = `(${info.count} ${info.count > 1 ? "notes" : "note"})`;
+
+        summary.append(average, count);
+        if (info.average !== null) {
+          const averageStars = document.createElement("span");
+          averageStars.className = "muted";
+          averageStars.textContent = "★".repeat(Math.round(info.average))
+            + "☆".repeat(5 - Math.round(info.average));
+          summary.appendChild(averageStars);
+        }
+
+        const prompt = document.createElement("div");
+        prompt.className = "hint";
+        prompt.style.marginTop = "10px";
+        prompt.textContent = "Ta note :";
+
+        ratingArea.append(summary, prompt, starButtons(song.id, info.mine));
+
+        if (info.mine !== null) {
+          const mine = document.createElement("div");
+          mine.className = "my-note";
+          mine.textContent = `Tu as attribué ${info.mine}/5. Tu peux cliquer sur une autre étoile pour modifier ta note.`;
+
+          const remove = document.createElement("button");
+          remove.type = "button";
+          remove.className = "secondary";
+          remove.style.marginTop = "8px";
+          remove.textContent = "Retirer ma note";
+          remove.addEventListener("click", () => removeRating(song.id));
+
+          ratingArea.append(mine, remove);
+        } else {
+          const help = document.createElement("div");
+          help.className = "my-note";
+          help.textContent = "Clique sur une étoile pour noter ce morceau.";
+          ratingArea.appendChild(help);
+        }
+
+        card.appendChild(ratingArea);
+
+        const actions = document.createElement("div");
+        actions.className = "song-actions";
+
+        if (currentUser && song.proposerUid === currentUser.uid) {
+          const statusSelect = document.createElement("select");
+          statusSelect.className = "status";
+          statusSelect.setAttribute("aria-label", "Modifier le statut");
+
+          for (const value of STATUSES) {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = value;
+            option.selected = (song.status || "À découvrir") === value;
+            statusSelect.appendChild(option);
+          }
+
+          statusSelect.addEventListener("change", async () => {
+            try {
+              await updateDoc(doc(db, "songs", song.id), {
+                status: statusSelect.value
+              });
+              showMessage("Statut mis à jour.", "success");
+            } catch (error) {
+              console.error(error);
+              showMessage("Impossible de modifier le statut. Vérifie les règles Firebase.", "error");
+            }
+          });
+
+          const del = document.createElement("button");
+          del.type = "button";
+          del.className = "danger";
+          del.textContent = "Supprimer ma proposition";
+          del.addEventListener("click", async () => {
+            if (!confirm(`Supprimer « ${song.title} » ?`)) return;
+            try {
+              await deleteDoc(doc(db, "songs", song.id));
+              showMessage("Proposition supprimée.", "success");
+            } catch (error) {
+              console.error(error);
+              showMessage("Suppression impossible. Vérifie les règles Firebase.", "error");
+            }
+          });
+
+          actions.append(statusSelect, del);
+          card.appendChild(actions);
+        }
+
+        root.appendChild(card);
+      }
+    }
+
+    async function saveRating(songId, rating) {
+      if (!currentUser) {
+        showMessage("Connexion en cours, réessaie dans un instant.");
+        return;
+      }
+
+      try {
+        const ratingRef = doc(db, "songs", songId, "ratings", currentUser.uid);
+        await setDoc(ratingRef, {
+          uid: currentUser.uid,
+          nickname: nickname(),
+          rating,
+          updatedAt: serverTimestamp()
+        });
+        showMessage(`Ta note de ${rating}/5 a été enregistrée.`, "success");
+      } catch (error) {
+        console.error(error);
+        showMessage("Impossible d'enregistrer la note. Vérifie la connexion et les règles Firebase.", "error");
+      }
+    }
+
+    async function removeRating(songId) {
+      if (!currentUser) return;
+      try {
+        await deleteDoc(doc(db, "songs", songId, "ratings", currentUser.uid));
+        showMessage("Ta note a été retirée.", "success");
+      } catch (error) {
+        console.error(error);
+        showMessage("Impossible de retirer ta note.", "error");
+      }
+    }
+
+    $("songForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      if (!currentUser) {
+        showMessage("Connexion en cours, réessaie dans un instant.");
+        return;
+      }
+
+      const title = $("title").value.trim();
+      const artist = $("artist").value.trim();
+      const rawLink = $("link").value.trim();
+      const link = rawLink ? safeUrl(rawLink) : "";
+
+      if (!title || !artist) {
+        showMessage("Le titre et l'artiste sont obligatoires.", "error");
+        return;
+      }
+      if (rawLink && !link) {
+        showMessage("Le lien doit commencer par https:// ou http://.", "error");
+        return;
+      }
+
+      const submit = $("songForm").querySelector('button[type="submit"]');
+      submit.disabled = true;
+
+      try {
+        await addDoc(collection(db, "songs"), {
+          title,
+          artist,
+          link,
+          proposedBy: nickname(),
+          proposerUid: currentUser.uid,
+          status: "À découvrir",
+          createdAt: serverTimestamp()
+        });
+        $("songForm").reset();
+        showMessage("Morceau ajouté à la liste !", "success");
+      } catch (error) {
+        console.error(error);
+        showMessage("Impossible d'ajouter le morceau. Vérifie les règles Firebase.", "error");
+      } finally {
+        submit.disabled = false;
+      }
+    });
+
+    $("filterStatus").addEventListener("change", renderSongs);
+    $("sortBy").addEventListener("change", renderSongs);
+
+    function watchRatings(songId) {
+      if (ratingUnsubscribe.has(songId)) return;
+
+      const unsubscribe = onSnapshot(
+        collection(db, "songs", songId, "ratings"),
+        snapshot => {
+          const map = new Map();
+          snapshot.forEach(item => {
+            const data = item.data();
+            if (Number.isInteger(data.rating) && data.rating >= 1 && data.rating <= 5) {
+              map.set(item.id, data);
+            }
+          });
+          ratingsBySong.set(songId, map);
+          renderSongs();
+        },
+        error => {
+          console.error(error);
+          showMessage("Erreur de lecture des notes. Vérifie les règles Firestore.", "error");
+        }
+      );
+
+      ratingUnsubscribe.set(songId, unsubscribe);
+    }
+
+    function watchSongs() {
+      onSnapshot(
+        collection(db, "songs"),
+        snapshot => {
+          songs = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+
+          const currentIds = new Set(songs.map(song => song.id));
+
+          for (const [id, unsubscribe] of ratingUnsubscribe.entries()) {
+            if (!currentIds.has(id)) {
+              unsubscribe();
+              ratingUnsubscribe.delete(id);
+              ratingsBySong.delete(id);
+            }
+          }
+
+          for (const song of songs) watchRatings(song.id);
+          renderSongs();
+          showMessage(`${songs.length} morceau(x) dans la liste.`, "success");
+        },
+        error => {
+          console.error(error);
+          showMessage("Impossible de charger la liste. Vérifie Firebase et les règles Firestore.", "error");
+        }
+      );
+    }
+
+    try {
+      await signInAnonymously(auth);
+      onAuthStateChanged(auth, user => {
+        currentUser = user;
+        if (user) watchSongs();
+      });
+    } catch (error) {
+      console.error(error);
+      showMessage("Connexion Firebase impossible. Vérifie que l'authentification anonyme est activée et que la configuration est correcte.", "error");
+    }
+  </script>
+</body>
+</html>
